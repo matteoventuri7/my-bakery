@@ -1,0 +1,73 @@
+﻿@page "/ingredients"
+@inject SweetAlertService sa
+@inject HttpClient http
+<h3>Ingredients</h3>
+
+<div class="float-right">
+    <a href="/ingredients/new" class="btn btn-outline-primary">New ingredient</a>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Unit</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (ingredients is not null)
+        {
+            foreach (var ing in ingredients)
+            {
+                <tr>
+                    <th scope="row">@ing.Id</th>
+                    <td>@ing.Name</td>
+                    <td>@ing.Unit</td>                    
+                    <td>
+                        <a href="/sweets/@ing.Id" class="btn btn-link">Modify</a>
+                        <button class="btn btn-link" @onclick="_=>RemoveIngredient(ing)">Remove</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Ingredient> ingredients;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            ingredients = new List<Ingredient>(await http.GetFromJsonAsync<Ingredient[]>("ingredient"));
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    async Task RemoveIngredient(Ingredient ing)
+    {
+        try
+        {
+            var result = await http.DeleteAsync($"ingredient/{ing.Id}");
+            if (result.IsSuccessStatusCode)
+            {
+                ingredients.Remove(ing);
+                await sa.FireAsync("Success", "Ingredient removed.", SweetAlertIcon.Success);
+            }
+            else
+            {
+                await sa.FireAsync("Error", "Something is wrong.", SweetAlertIcon.Error);
+            }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+}

@@ -1,0 +1,21 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    <NavMenu />
+
+    <div class="main">
+        <div class="top-row px-4 auth">
+            <a href="/">
+                <img src="/images/bakery-shop.svg" class="logo" alt="bakery icon" />
+                Luana&Maria
+            </a>
+            <div class="auth-links">
+                <LoginDisplay />
+            </div>
+        </div>
+
+        <div class="content px-4">
+            @Body
+        </div>
+    </div>
+</div>

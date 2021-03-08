@@ -1,0 +1,95 @@
+﻿@page "/ingredients/new"
+@page "/ingredients/{id:int}"
+
+@if (ing == null)
+{
+    <p>Loding...</p>
+}
+else
+{
+    <h3>@TitlePage</h3>
+
+    <div class="row">
+        <div class="col">
+            <EditForm Model="ing" OnValidSubmit="SaveIngredient">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <label>Name:</label>
+                <InputText @bind-Value="ing.Name" class="form-control"></InputText>
+
+                <label>Unit:</label>
+                <InputText @bind-Value="ing.Unit" class="form-control"></InputText>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+
+}
+
+@code{
+    [Parameter]
+    public int Id { get; set; }
+
+    [Inject]
+    public HttpClient http { get; set; }
+    [Inject]
+    public SweetAlertService sw { get; set; }
+
+    private Ingredient ing = new Ingredient();
+    private string TitlePage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            if (Id != default(int))
+            {
+                ing = await http.GetFromJsonAsync<Ingredient>($"ingredient/{Id}");
+                TitlePage = "Modify ingredient";
+            }
+            else
+            {
+                TitlePage = "Insert new ingredient";
+            }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private async Task SaveIngredient()
+    {
+        try
+        {
+            bool success;
+
+            if (ing.Id == default(int))
+            {
+                var resp = await http.PostAsJsonAsync("ingredient", ing);
+                success = resp.IsSuccessStatusCode;
+            }
+            else
+            {
+                var resp = await http.PutAsJsonAsync("ingredient", ing);
+                success = resp.IsSuccessStatusCode;
+            }
+
+            if (success)
+            {
+                await sw.FireAsync("Success", "Ingredient save success.", SweetAlertIcon.Success);
+                TitlePage = "Modify ingredient";
+            }
+            else
+            {
+                await sw.FireAsync("Error", "Something is wrong.", SweetAlertIcon.Error);
+            }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+}

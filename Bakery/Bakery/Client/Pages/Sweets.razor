@@ -1,0 +1,118 @@
+﻿@page "/sweets"
+@inject SweetAlertService sa
+@inject HttpClient http
+<h3>Sweets</h3>
+
+<div class="float-right">
+    <a href="/sweets/new" class="btn btn-outline-primary">New sweet</a>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Catalog Price</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Days past</th>
+            <th scope="col">When start selling</th>
+            <th scope="col">Today cost</th>
+            <th scope="col">Image</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (sweets is not null)
+        {
+            foreach (var sw in sweets)
+            {
+                <tr class="@GetColorRow(sw)">
+                    <th scope="row">@sw.Id</th>
+                    <td>@sw.Name</td>
+                    <td>@sw.Price.ToString("0.00") €</td>
+                    <td>@sw.Quantity</td>
+                    <td>@sw.DayOld()</td>
+                    <td>@(sw.StartSellingDate is null ? "-" : sw.StartSellingDate.Value.ToShortDateString())</td>
+                    <td>@sw.CalculateDayPrice().ToString("0.00") €</td>
+                    <td>
+                        <img class="image-table" src="/sweet/@sw.ImageFileName" alt="@sw.Name" />
+                    </td>
+                    <td>
+                        @if (sw.IsSellable())
+                        {
+                            <button class="btn btn-link" @onclick="_=>StartSelling(sw)">Start selling</button>
+                        }
+                        <a href="/sweets/@sw.Id" class="btn btn-link">Modify</a>
+                        <button class="btn btn-link" @onclick="_=>RemoveSweet(sw)">Remove</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Sweet> sweets;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            sweets = new List<Sweet>(await http.GetFromJsonAsync<Sweet[]>("sweet"));
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private string GetColorRow(Sweet s)
+    {
+        int d = s.DayOld();
+        if (d == 1) return "bg-warning";
+        else if (d > 1) return "bg-danger";
+        else return null;
+    }
+
+    async Task RemoveSweet(Sweet s)
+    {
+        try
+        {
+            var result = await http.DeleteAsync($"sweet/{s.Id}");
+            if (result.IsSuccessStatusCode)
+            {
+                sweets.Remove(s);
+                await sa.FireAsync("Success", "Sweet removed.", SweetAlertIcon.Success);
+            }
+            else
+            {
+                await sa.FireAsync("Error", "Something is wrong.", SweetAlertIcon.Error);
+            }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private async Task StartSelling(Sweet s)
+    {
+        try
+        {
+            s.StartSelling();
+            var result = await http.PutAsJsonAsync("sweet/simple", s);
+            if (result.IsSuccessStatusCode)
+            {
+                await sa.FireAsync("Success", "Sweet is in the window.", SweetAlertIcon.Success);
+            }
+            else
+            {
+                await sa.FireAsync("Error", "Something is wrong.", SweetAlertIcon.Error);
+            }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+}
