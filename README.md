@@ -19,3 +19,11 @@ A case study with Blazor WASM
 - Add ingredients
 - Add sweets (with photos)
 - Enjoy!
+
+### Technologies used
+- .Net 5
+- Blazor Webassembly
+- SQLite
+- .Net Identity Framework
+- jQuery
+- Bootstrap
