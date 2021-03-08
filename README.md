@@ -1,6 +1,10 @@
 # my-bakery
 A case study with Blazor WASM
 
+### Prerequisites
+- Install .Net 5.0 SDK https://dotnet.microsoft.com/download/dotnet/5.0
+- Install a internet browser
+
 ### How start project
 - Download code or git clone
 - Open terminal inside folder 
